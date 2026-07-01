@@ -1,0 +1,15 @@
+{"_id":"siteSettings","_type":"siteSettings","logo":"K P D O P","heroFirstName":"Krittin","heroLastName":"Patkuldilok","heroEyebrow":"CINEMATOGRAPHER  /  BANGKOK","heroRole":"Visual Storyteller","heroVideoId":"725146289","contactTitle":"MAY OUR PATH CROSS AGAIN.","email":"Krittinpatkuldilok@gmail.com","vimeoUrl":"https://vimeo.com/user179328774","copyright":"© 2026 KPDOP"}
+{"_id":"bio","_type":"bio","name":"KPDOP","role":"Visual Storyteller","paragraphs":["Krittin Patkuldilok is a Bangkok-based Cinematographer specializing in shooting narrative films, music videos, and commercials.","He has worked on films such as a concert unit camera operator on Ryuichi Sakamoto: Coda, directed by Stephen Nomura Schible and DPed by Tom Richmond, ASC and Neo S. Sora, which premiered at the Tribeca Film Festival, and the concert RYŪICHI SAKAMOTO: async at the Park Avenue Armory, premiered at the Berlinale Film Festival.","He graduated from the Feirstein Graduate School of Cinema with an MFA in Cinematography. Interested in the emotions and drama that light invokes, he spent years studying various lighting techniques in studios and on location."],"quote":"Lighting shapes the story."}
+{"_id":"video-narrative-1","_type":"video","title":"Alter — Teaser, Sculptor","vimeoId":"1066412829","category":"narrative","order":10}
+{"_id":"video-narrative-2","_type":"video","title":"ที่รัก (Habibi)","vimeoId":"1006436613","category":"narrative","order":20}
+{"_id":"video-narrative-3","_type":"video","title":"Debt","vimeoId":"1019652709","category":"narrative","order":30}
+{"_id":"video-narrative-4","_type":"video","title":"Madre Maria","vimeoId":"724752423","category":"narrative","order":40}
+{"_id":"video-narrative-5","_type":"video","title":"My Outer Devil","vimeoId":"724851962","category":"narrative","order":50}
+{"_id":"video-commercial-1","_type":"video","title":"Product Reel 2022","vimeoId":"725146289","category":"commercial","order":10}
+{"_id":"video-internet-1","_type":"video","title":"Storytelling Reel","vimeoId":"724864156","category":"internet","order":10}
+{"_id":"gear-1","_type":"gearItem","category":"Camera","name":"ARRI Alexa Mini","order":10}
+{"_id":"gear-2","_type":"gearItem","category":"Camera","name":"Sony FX6","order":20}
+{"_id":"gear-3","_type":"gearItem","category":"Lenses","name":"Cooke S4/i Prime Set","order":30}
+{"_id":"gear-4","_type":"gearItem","category":"Lenses","name":"Zeiss Super Speed MkIII","order":40}
+{"_id":"gear-5","_type":"gearItem","category":"Lighting","name":"ARRI SkyPanel S60","order":50}
+{"_id":"gear-6","_type":"gearItem","category":"Support","name":"Ronin 2 Gimbal","order":60}
