@@ -55,6 +55,13 @@ export default defineType({
       options: {accept: 'video/*'},
     }),
     defineField({
+      name: 'isHighlight',
+      title: 'เป็นวิดีโอไฮไลท์ของหมวดหมู่',
+      type: 'boolean',
+      description: 'เลือกวิดีโอนี้เป็น Featured Video ของหมวด (มีได้หนึ่งวิดีโอต่อหมวด)',
+      initialValue: false,
+    }),
+    defineField({
       name: 'order',
       title: 'ลำดับการแสดง (เลขน้อยขึ้นก่อน)',
       type: 'number',

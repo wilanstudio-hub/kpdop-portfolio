@@ -129,6 +129,30 @@
   }
   .reel-card:hover .card-label{ opacity:1; transform:translateY(0); }
 
+  .highlight-card{
+    position:relative; aspect-ratio:16/9; width:100%; background:#111;
+    overflow:hidden; margin-bottom:4px; cursor:pointer;
+  }
+  .highlight-card iframe,
+  .highlight-card video{
+    position:absolute; inset:0; width:100%; height:100%; border:0; object-fit:cover;
+  }
+  .highlight-label{
+    position:absolute; bottom:0; left:0; right:0;
+    padding:32px 40px 28px;
+    background:linear-gradient(0deg, rgba(0,0,0,.82) 0%, transparent 100%);
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+    pointer-events:none;
+  }
+  .highlight-title{
+    font-family:var(--serif); font-size:clamp(18px, 2.6vw, 34px);
+    font-weight:400; letter-spacing:1px; color:#f5f5f3;
+  }
+  .highlight-badge{
+    flex-shrink:0; font-size:9px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--accent); border:1px solid var(--accent); padding:5px 12px;
+  }
+
   .gear-list{
     display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
     gap:32px 40px; margin-top:8px;
@@ -219,6 +243,7 @@
     <div class="work-title">N A R R A T I V E</div>
     <div class="work-count" id="narrativeCount"></div>
   </div>
+  <div id="narrativeHighlight"></div>
   <div class="reel-grid" id="narrativeGrid"></div>
 </section>
 
@@ -227,6 +252,7 @@
     <div class="work-title">C O M M E R C I A L</div>
     <div class="work-count" id="commercialCount"></div>
   </div>
+  <div id="commercialHighlight"></div>
   <div class="reel-grid" id="commercialGrid"></div>
 </section>
 
@@ -235,6 +261,7 @@
     <div class="work-title">INTERNET CONTENT</div>
     <div class="work-count" id="internetCount"></div>
   </div>
+  <div id="internetHighlight"></div>
   <div class="reel-grid" id="internetGrid"></div>
 </section>
 
@@ -275,9 +302,9 @@
   const GROQ_QUERY = `{
     "site": *[_type=="siteSettings"][0],
     "bio": *[_type=="bio"][0],
-    "narrative": *[_type=="video" && category=="narrative"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref },
-    "commercial": *[_type=="video" && category=="commercial"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref },
-    "internet": *[_type=="video" && category=="internet"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref },
+    "narrative": *[_type=="video" && category=="narrative"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref, isHighlight },
+    "commercial": *[_type=="video" && category=="commercial"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref, isHighlight },
+    "internet": *[_type=="video" && category=="internet"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref, isHighlight },
     "gear": *[_type=="gearItem"]|order(order asc){ category, name },
     "homePage": *[_type=="homePage"][0]{ sections }
   }`;
@@ -424,6 +451,60 @@
     (items || []).forEach(item => container.appendChild(buildVideoCard(item)));
   }
 
+  function buildHighlightCard(wrapperId, item) {
+    const wrap = document.getElementById(wrapperId);
+    wrap.innerHTML = '';
+    if (!item) return;
+
+    const card = document.createElement('div');
+    card.className = 'highlight-card';
+
+    const ytId = extractYoutubeId(item.youtubeId);
+    const fileUrl = videoFileUrl(item.videoFileRef);
+
+    if (ytId) {
+      const iframe = document.createElement('iframe');
+      const baseSrc = youtubeEmbed(ytId, false);
+      iframe.src = baseSrc;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      card.appendChild(iframe);
+      card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(ytId, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
+    } else if (fileUrl) {
+      const video = document.createElement('video');
+      video.src = fileUrl;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      card.appendChild(video);
+      card.addEventListener('mouseenter', () => video.play());
+      card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+    } else if (item.videoId) {
+      const iframe = document.createElement('iframe');
+      const baseSrc = vimeoEmbed(item.videoId, false);
+      iframe.src = baseSrc;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      card.appendChild(iframe);
+      card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(item.videoId, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
+    }
+
+    const label = document.createElement('div');
+    label.className = 'highlight-label';
+    const title = document.createElement('div');
+    title.className = 'highlight-title';
+    title.textContent = item.title || '';
+    const badge = document.createElement('div');
+    badge.className = 'highlight-badge';
+    badge.textContent = 'FEATURED';
+    label.appendChild(title);
+    label.appendChild(badge);
+    card.appendChild(label);
+    wrap.appendChild(card);
+  }
+
   function renderSite(data) {
     if (!data || !data.site) {
       document.getElementById('loadingScreen').innerHTML =
@@ -457,15 +538,15 @@
       bioContainer.appendChild(q);
     }
 
-    buildReelGrid('narrativeGrid', data.narrative);
-    buildReelGrid('commercialGrid', data.commercial);
-    buildReelGrid('internetGrid', data.internet);
-    document.getElementById('narrativeCount').textContent =
-      String((data.narrative || []).length).padStart(2, '0') + ' PROJECTS';
-    document.getElementById('commercialCount').textContent =
-      String((data.commercial || []).length).padStart(2, '0') + ' PROJECTS';
-    document.getElementById('internetCount').textContent =
-      String((data.internet || []).length).padStart(2, '0') + ' PROJECTS';
+    ['narrative', 'commercial', 'internet'].forEach(cat => {
+      const items = data[cat] || [];
+      const highlight = items.find(v => v.isHighlight) || null;
+      const rest = items.filter(v => !v.isHighlight);
+      buildHighlightCard(cat + 'Highlight', highlight);
+      buildReelGrid(cat + 'Grid', rest);
+      document.getElementById(cat + 'Count').textContent =
+        String(items.length).padStart(2, '0') + ' PROJECTS';
+    });
 
     const gearList = document.getElementById('gearList');
     gearList.innerHTML = '';
