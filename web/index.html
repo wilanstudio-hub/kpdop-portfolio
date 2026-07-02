@@ -387,7 +387,7 @@
       const m = input.match(re);
       if (m) return m[1];
     }
-    return input;
+    return null; // not a YouTube URL — do not fall back to raw string
   }
 
   function youtubeEmbed(id, autoplay) {
@@ -402,46 +402,49 @@
   }
 
   function facebookEmbed(url, autoplay) {
-    const encoded = encodeURIComponent(url);
-    return `https://www.facebook.com/plugins/video.php?href=${encoded}&show_text=false&autoplay=${autoplay}&mute=true&width=640`;
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=${autoplay}&mute=true&width=640`;
   }
 
-  function makeFacebookIframe(url, autoplay) {
-    const iframe = document.createElement('iframe');
-    iframe.src = facebookEmbed(url, autoplay);
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allowfullscreen', 'true');
-    iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share');
-    return iframe;
-  }
-
-  function buildVideoCard(item) {
-    const card = document.createElement('div');
-    card.className = 'reel-card';
-    const label = document.createElement('div');
-    label.className = 'card-label';
-    label.textContent = item.title || '';
-
-    const ytId = extractYoutubeId(item.youtubeId);
+  // Returns { type, id|url } describing the best available video source, or null.
+  function resolveVideoSource(item) {
+    // youtubeId field may accidentally contain a Facebook URL — detect both
+    if (item.youtubeId) {
+      const ytId = extractYoutubeId(item.youtubeId);
+      if (ytId) return {type: 'youtube', id: ytId};
+      if (/facebook\.com/.test(item.youtubeId)) return {type: 'facebook', url: item.youtubeId};
+    }
+    if (item.facebookUrl) return {type: 'facebook', url: item.facebookUrl};
     const fileUrl = videoFileUrl(item.videoFileRef);
+    if (fileUrl) return {type: 'file', url: fileUrl};
+    if (item.videoId) return {type: 'vimeo', id: item.videoId};
+    return null;
+  }
 
-    if (ytId) {
+  // Attaches the correct media player element to `card` and wires hover autoplay.
+  function attachVideoMedia(card, source) {
+    if (!source) return;
+    if (source.type === 'youtube') {
       const iframe = document.createElement('iframe');
-      const baseSrc = youtubeEmbed(ytId, false);
-      iframe.src = baseSrc;
+      const base = youtubeEmbed(source.id, false);
+      iframe.src = base;
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allow', 'autoplay; fullscreen');
       card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(ytId, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
-    } else if (item.facebookUrl) {
-      const iframe = makeFacebookIframe(item.facebookUrl, false);
+      card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(source.id, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = base; });
+    } else if (source.type === 'facebook') {
+      const iframe = document.createElement('iframe');
+      const base = facebookEmbed(source.url, false);
+      iframe.src = base;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allowfullscreen', 'true');
+      iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share');
       card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(item.facebookUrl, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = facebookEmbed(item.facebookUrl, false); });
-    } else if (fileUrl) {
+      card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(source.url, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = base; });
+    } else if (source.type === 'file') {
       const video = document.createElement('video');
-      video.src = fileUrl;
+      video.src = source.url;
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
@@ -449,17 +452,25 @@
       card.appendChild(video);
       card.addEventListener('mouseenter', () => video.play());
       card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
-    } else if (item.videoId) {
+    } else if (source.type === 'vimeo') {
       const iframe = document.createElement('iframe');
-      const baseSrc = vimeoEmbed(item.videoId, false);
-      iframe.src = baseSrc;
+      const base = vimeoEmbed(source.id, false);
+      iframe.src = base;
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allow', 'autoplay; fullscreen');
       card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(item.videoId, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
+      card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(source.id, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = base; });
     }
+  }
 
+  function buildVideoCard(item) {
+    const card = document.createElement('div');
+    card.className = 'reel-card';
+    attachVideoMedia(card, resolveVideoSource(item));
+    const label = document.createElement('div');
+    label.className = 'card-label';
+    label.textContent = item.title || '';
     card.appendChild(label);
     return card;
   }
@@ -478,42 +489,7 @@
     const card = document.createElement('div');
     card.className = 'highlight-card';
 
-    const ytId = extractYoutubeId(item.youtubeId);
-    const fileUrl = videoFileUrl(item.videoFileRef);
-
-    if (ytId) {
-      const iframe = document.createElement('iframe');
-      const baseSrc = youtubeEmbed(ytId, false);
-      iframe.src = baseSrc;
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'autoplay; fullscreen');
-      card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(ytId, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
-    } else if (item.facebookUrl) {
-      const iframe = makeFacebookIframe(item.facebookUrl, false);
-      card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(item.facebookUrl, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = facebookEmbed(item.facebookUrl, false); });
-    } else if (fileUrl) {
-      const video = document.createElement('video');
-      video.src = fileUrl;
-      video.muted = true;
-      video.loop = true;
-      video.playsInline = true;
-      card.appendChild(video);
-      card.addEventListener('mouseenter', () => video.play());
-      card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
-    } else if (item.videoId) {
-      const iframe = document.createElement('iframe');
-      const baseSrc = vimeoEmbed(item.videoId, false);
-      iframe.src = baseSrc;
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'autoplay; fullscreen');
-      card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(item.videoId, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
-    }
+    attachVideoMedia(card, resolveVideoSource(item));
 
     const label = document.createElement('div');
     label.className = 'highlight-label';
