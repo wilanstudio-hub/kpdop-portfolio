@@ -4,7 +4,9 @@ export const sectionBio = defineType({
   name: 'section_bio',
   title: 'Bio Section',
   type: 'object',
-  fields: [],
+  fields: [
+    defineField({name: 'sectionTitle', title: 'Section Title Override', type: 'string'}),
+  ],
   preview: {prepare: () => ({title: 'Bio'})},
 })
 
@@ -39,7 +41,9 @@ export const sectionGear = defineType({
   name: 'section_gear',
   title: 'Gear Section',
   type: 'object',
-  fields: [],
+  fields: [
+    defineField({name: 'sectionTitle', title: 'Section Title Override', type: 'string'}),
+  ],
   preview: {prepare: () => ({title: 'Gear'})},
 })
 
@@ -47,7 +51,9 @@ export const sectionContact = defineType({
   name: 'section_contact',
   title: 'Contact Section',
   type: 'object',
-  fields: [],
+  fields: [
+    defineField({name: 'sectionTitle', title: 'Section Title Override', type: 'string'}),
+  ],
   preview: {prepare: () => ({title: 'Contact'})},
 })
 
