@@ -42,7 +42,46 @@ export default defineConfig({
               .id('homePage')
               .child(S.document().schemaType('homePage').documentId('homePage')),
             S.divider(),
-            S.documentTypeListItem('video').title('Videos (ทุกหมวด)'),
+            S.listItem()
+              .title('Videos')
+              .id('videos')
+              .child(
+                S.list()
+                  .id('videoCategories')
+                  .title('Videos')
+                  .items([
+                    S.listItem()
+                      .title('Narrative')
+                      .id('narrative')
+                      .child(
+                        S.documentList()
+                          .id('narrativeList')
+                          .title('Narrative')
+                          .filter('_type == "video" && category == "narrative"')
+                          .defaultOrdering([{field: 'order', direction: 'asc'}]),
+                      ),
+                    S.listItem()
+                      .title('Commercial')
+                      .id('commercial')
+                      .child(
+                        S.documentList()
+                          .id('commercialList')
+                          .title('Commercial')
+                          .filter('_type == "video" && category == "commercial"')
+                          .defaultOrdering([{field: 'order', direction: 'asc'}]),
+                      ),
+                    S.listItem()
+                      .title('Internet Content')
+                      .id('internet')
+                      .child(
+                        S.documentList()
+                          .id('internetList')
+                          .title('Internet Content')
+                          .filter('_type == "video" && category == "internet"')
+                          .defaultOrdering([{field: 'order', direction: 'asc'}]),
+                      ),
+                  ]),
+              ),
             S.documentTypeListItem('gearItem').title('Gear'),
           ]),
     }),
