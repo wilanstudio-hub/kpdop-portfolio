@@ -19,8 +19,8 @@ export default defineType({
       validation: (rule) =>
         rule.custom((value, context) => {
           const doc = context.document as any
-          if (!value && !doc?.youtubeId && !doc?.videoFile?.asset) {
-            return 'ต้องมีอย่างน้อยหนึ่งแหล่งวิดีโอ: Vimeo ID, YouTube ID/Link หรือ Upload Video File'
+          if (!value && !doc?.youtubeId && !doc?.facebookUrl && !doc?.videoFile?.asset) {
+            return 'ต้องมีอย่างน้อยหนึ่งแหล่งวิดีโอ: Vimeo ID, YouTube ID/Link, Facebook Link หรือ Upload Video File'
           }
           if (value && !/^\d+$/.test(value)) {
             return 'Vimeo ID ต้องเป็นตัวเลขเท่านั้น'
@@ -47,6 +47,12 @@ export default defineType({
       title: 'YouTube Video ID / Link',
       type: 'string',
       description: 'ใส่ Video ID หรือ URL เช่น dQw4w9WgXcQ หรือ https://youtu.be/dQw4w9WgXcQ',
+    }),
+    defineField({
+      name: 'facebookUrl',
+      title: 'Facebook Video Link',
+      type: 'string',
+      description: 'URL ของวิดีโอ Facebook เช่น https://www.facebook.com/watch/?v=123456789',
     }),
     defineField({
       name: 'videoFile',

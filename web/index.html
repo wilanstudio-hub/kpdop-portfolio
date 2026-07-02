@@ -302,9 +302,9 @@
   const GROQ_QUERY = `{
     "site": *[_type=="siteSettings"][0],
     "bio": *[_type=="bio"][0],
-    "narrative": *[_type=="video" && category=="narrative"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref, isHighlight },
-    "commercial": *[_type=="video" && category=="commercial"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref, isHighlight },
-    "internet": *[_type=="video" && category=="internet"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref, isHighlight },
+    "narrative": *[_type=="video" && category=="narrative"]|order(order asc){ "videoId": vimeoId, title, youtubeId, facebookUrl, "videoFileRef": videoFile.asset._ref, isHighlight },
+    "commercial": *[_type=="video" && category=="commercial"]|order(order asc){ "videoId": vimeoId, title, youtubeId, facebookUrl, "videoFileRef": videoFile.asset._ref, isHighlight },
+    "internet": *[_type=="video" && category=="internet"]|order(order asc){ "videoId": vimeoId, title, youtubeId, facebookUrl, "videoFileRef": videoFile.asset._ref, isHighlight },
     "gear": *[_type=="gearItem"]|order(order asc){ category, name },
     "homePage": *[_type=="homePage"][0]{ sections }
   }`;
@@ -401,6 +401,20 @@
     return `https://cdn.sanity.io/files/${SANITY_PROJECT_ID}/${SANITY_DATASET}/${match[1]}.${match[2]}`;
   }
 
+  function facebookEmbed(url, autoplay) {
+    const encoded = encodeURIComponent(url);
+    return `https://www.facebook.com/plugins/video.php?href=${encoded}&show_text=false&autoplay=${autoplay}&mute=true&width=640`;
+  }
+
+  function makeFacebookIframe(url, autoplay) {
+    const iframe = document.createElement('iframe');
+    iframe.src = facebookEmbed(url, autoplay);
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share');
+    return iframe;
+  }
+
   function buildVideoCard(item) {
     const card = document.createElement('div');
     card.className = 'reel-card';
@@ -420,6 +434,11 @@
       card.appendChild(iframe);
       card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(ytId, true); });
       card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
+    } else if (item.facebookUrl) {
+      const iframe = makeFacebookIframe(item.facebookUrl, false);
+      card.appendChild(iframe);
+      card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(item.facebookUrl, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = facebookEmbed(item.facebookUrl, false); });
     } else if (fileUrl) {
       const video = document.createElement('video');
       video.src = fileUrl;
@@ -471,6 +490,11 @@
       card.appendChild(iframe);
       card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(ytId, true); });
       card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
+    } else if (item.facebookUrl) {
+      const iframe = makeFacebookIframe(item.facebookUrl, false);
+      card.appendChild(iframe);
+      card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(item.facebookUrl, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = facebookEmbed(item.facebookUrl, false); });
     } else if (fileUrl) {
       const video = document.createElement('video');
       video.src = fileUrl;
