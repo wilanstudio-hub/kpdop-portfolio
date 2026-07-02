@@ -19,6 +19,13 @@ export default defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'images',
+      title: 'รูปภาพ',
+      type: 'array',
+      of: [{type: 'image', options: {hotspot: true}}],
+      options: {layout: 'grid'},
+    }),
+    defineField({
       name: 'order',
       title: 'ลำดับการแสดง (เลขน้อยขึ้นก่อน)',
       type: 'number',

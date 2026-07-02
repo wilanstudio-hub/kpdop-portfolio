@@ -10,9 +10,21 @@
     --white:#f5f5f3;
     --grey:#8a8a85;
     --line: rgba(245,245,243,0.14);
+    --accent:#f5f5f3;
+    --grid-cols:repeat(auto-fit, minmax(320px, 1fr));
     --serif: 'Times New Roman', 'Noto Serif', serif;
     --sans: 'Helvetica Neue', Arial, sans-serif;
   }
+  [data-theme="light"]{
+    --black:#f5f5f3;
+    --white:#0a0a0a;
+    --grey:#5a5a55;
+    --line: rgba(10,10,10,0.12);
+  }
+  .hero-content, .hero-eyebrow, .hero h1, .hero-role, .scroll-cue{
+    color:#f5f5f3;
+  }
+  .hero-eyebrow, .hero-role, .scroll-cue{ color:rgba(245,245,243,0.6); }
   *{box-sizing:border-box; margin:0; padding:0;}
   html{scroll-behavior:smooth;}
   body{
@@ -37,7 +49,7 @@
   }
   nav a::after{
     content:''; position:absolute; left:0; bottom:0;
-    width:0%; height:1px; background:var(--white); transition:width .35s ease;
+    width:0%; height:1px; background:var(--accent); transition:width .35s ease;
   }
   nav a:hover::after{ width:100%; }
   .nav-toggle{ display:none; }
@@ -103,7 +115,7 @@
   }
   .work-title{ font-family:var(--serif); font-size:clamp(26px, 3vw, 40px); letter-spacing:2px; }
   .work-count{ font-size:12px; letter-spacing:2px; color:var(--grey); }
-  .reel-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:4px; }
+  .reel-grid{ display:grid; grid-template-columns:var(--grid-cols); gap:4px; }
   .reel-card{
     position:relative; aspect-ratio:16/9; background:#111; overflow:hidden; cursor:pointer;
   }
@@ -153,6 +165,7 @@
     transition:opacity .5s ease; text-align:center; padding:0 24px; line-height:2;
   }
 
+  #pageBuilder{ display:flex; flex-direction:column; }
   @media (max-width:860px){
     nav{ display:none; }
     .nav-toggle{ display:block; font-size:11px; letter-spacing:2px; }
@@ -189,6 +202,7 @@
   <div class="scroll-cue">SCROLL</div>
 </section>
 
+<main id="pageBuilder">
 <section id="bio">
   <div class="intro">
     <div>
@@ -238,6 +252,7 @@
     <a id="contactPhone" href="#"></a>
   </div>
 </section>
+</main>
 
 <footer>
   <div id="footerCopy"></div>
@@ -260,10 +275,11 @@
   const GROQ_QUERY = `{
     "site": *[_type=="siteSettings"][0],
     "bio": *[_type=="bio"][0],
-    "narrative": *[_type=="video" && category=="narrative"]|order(order asc){ "videoId": vimeoId, title },
-    "commercial": *[_type=="video" && category=="commercial"]|order(order asc){ "videoId": vimeoId, title },
-    "internet": *[_type=="video" && category=="internet"]|order(order asc){ "videoId": vimeoId, title },
-    "gear": *[_type=="gearItem"]|order(order asc){ category, name }
+    "narrative": *[_type=="video" && category=="narrative"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref },
+    "commercial": *[_type=="video" && category=="commercial"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref },
+    "internet": *[_type=="video" && category=="internet"]|order(order asc){ "videoId": vimeoId, title, youtubeId, "videoFileRef": videoFile.asset._ref },
+    "gear": *[_type=="gearItem"]|order(order asc){ category, name },
+    "homePage": *[_type=="homePage"][0]{ sections }
   }`;
 
   async function loadSiteData() {
@@ -285,30 +301,127 @@
     }
   }
 
+  function applySectionOrder(sections) {
+    if (!sections || !sections.length) return;
+    const all = ['bio', 'narrative', 'commercial', 'internet', 'gear', 'contact'];
+    const included = new Set();
+    sections.forEach((sec, i) => {
+      let id;
+      if (sec._type === 'section_bio') id = 'bio';
+      else if (sec._type === 'section_video') id = sec.category;
+      else if (sec._type === 'section_gear') id = 'gear';
+      else if (sec._type === 'section_contact') id = 'contact';
+      if (!id) return;
+      included.add(id);
+      const el = document.getElementById(id);
+      if (el) el.style.order = String(i + 1);
+    });
+    all.forEach(id => {
+      if (!included.has(id)) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      }
+    });
+  }
+
+  function applyTheme(site) {
+    const root = document.documentElement;
+    const mode = site.colorMode || 'dark';
+    root.setAttribute('data-theme', mode);
+
+    const accentMap = {
+      gold: '#c9a96e',
+      cyan: '#64c8c0',
+      rose: '#e07070',
+      white: mode === 'light' ? '#0a0a0a' : '#f5f5f3',
+    };
+    root.style.setProperty('--accent', accentMap[site.accentColor] || accentMap.white);
+
+    const gridMap = {
+      large: 'repeat(2, 1fr)',
+      single: '1fr',
+      grid: 'repeat(auto-fit, minmax(320px, 1fr))',
+    };
+    root.style.setProperty('--grid-cols', gridMap[site.videoGridLayout] || gridMap.grid);
+  }
+
   function vimeoEmbed(id, autoplay) {
     return `https://player.vimeo.com/video/${id}?background=1&loop=1&muted=1&autoplay=${autoplay ? 1 : 0}`;
   }
 
-  function buildReelGrid(containerId, items) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    (items || []).forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'reel-card';
+  function extractYoutubeId(input) {
+    if (!input) return null;
+    const patterns = [
+      /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
+      /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
+      /^([A-Za-z0-9_-]{11})$/,
+    ];
+    for (const re of patterns) {
+      const m = input.match(re);
+      if (m) return m[1];
+    }
+    return input;
+  }
+
+  function youtubeEmbed(id, autoplay) {
+    return `https://www.youtube.com/embed/${id}?mute=1&loop=1&playlist=${id}&controls=0&modestbranding=1&playsinline=1${autoplay ? '&autoplay=1' : ''}`;
+  }
+
+  function videoFileUrl(ref) {
+    if (!ref) return null;
+    const match = ref.match(/^file-(.+)-([^-]+)$/);
+    if (!match) return null;
+    return `https://cdn.sanity.io/files/${SANITY_PROJECT_ID}/${SANITY_DATASET}/${match[1]}.${match[2]}`;
+  }
+
+  function buildVideoCard(item) {
+    const card = document.createElement('div');
+    card.className = 'reel-card';
+    const label = document.createElement('div');
+    label.className = 'card-label';
+    label.textContent = item.title || '';
+
+    const ytId = extractYoutubeId(item.youtubeId);
+    const fileUrl = videoFileUrl(item.videoFileRef);
+
+    if (ytId) {
+      const iframe = document.createElement('iframe');
+      const baseSrc = youtubeEmbed(ytId, false);
+      iframe.src = baseSrc;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      card.appendChild(iframe);
+      card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(ytId, true); });
+      card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
+    } else if (fileUrl) {
+      const video = document.createElement('video');
+      video.src = fileUrl;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+      card.appendChild(video);
+      card.addEventListener('mouseenter', () => video.play());
+      card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+    } else if (item.videoId) {
       const iframe = document.createElement('iframe');
       const baseSrc = vimeoEmbed(item.videoId, false);
       iframe.src = baseSrc;
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allow', 'autoplay; fullscreen');
-      const label = document.createElement('div');
-      label.className = 'card-label';
-      label.textContent = item.title || '';
       card.appendChild(iframe);
-      card.appendChild(label);
-      container.appendChild(card);
       card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(item.videoId, true); });
       card.addEventListener('mouseleave', () => { iframe.src = baseSrc; });
-    });
+    }
+
+    card.appendChild(label);
+    return card;
+  }
+
+  function buildReelGrid(containerId, items) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    (items || []).forEach(item => container.appendChild(buildVideoCard(item)));
   }
 
   function renderSite(data) {
@@ -318,6 +431,8 @@
       return;
     }
     const site = data.site, bio = data.bio || {};
+    applyTheme(site);
+    if (data.homePage) applySectionOrder(data.homePage.sections);
 
     document.getElementById('navLogo').textContent = site.logo || 'K P D O P';
     document.getElementById('heroIframe').src = vimeoEmbed(site.heroVideoId, true);

@@ -10,7 +10,7 @@ const projectId = 'bd946qlz'
 const dataset = 'production'
 // ============================================================
 
-const singletonTypes = new Set(['siteSettings', 'bio'])
+const singletonTypes = new Set(['siteSettings', 'bio', 'homePage'])
 const singletonActions = new Set(['publish', 'discardChanges', 'restore'])
 
 export default defineConfig({
@@ -37,6 +37,10 @@ export default defineConfig({
               .title('Bio')
               .id('bio')
               .child(S.document().schemaType('bio').documentId('bio')),
+            S.listItem()
+              .title('Home Page (Section Order)')
+              .id('homePage')
+              .child(S.document().schemaType('homePage').documentId('homePage')),
             S.divider(),
             S.documentTypeListItem('video').title('Videos (ทุกหมวด)'),
             S.documentTypeListItem('gearItem').title('Gear'),

@@ -8,6 +8,7 @@ export default defineType({
     {name: 'hero', title: 'Hero (หน้าแรก)', default: true},
     {name: 'contact', title: 'Contact'},
     {name: 'footer', title: 'Footer'},
+    {name: 'appearance', title: 'Appearance'},
   ],
   fields: [
     defineField({
@@ -85,6 +86,55 @@ export default defineType({
       title: 'ข้อความ Copyright ท้ายเว็บ',
       type: 'string',
       group: 'footer',
+    }),
+    defineField({
+      name: 'colorMode',
+      title: 'Color Mode',
+      type: 'string',
+      group: 'appearance',
+      initialValue: 'dark',
+      options: {
+        list: [
+          {title: 'Dark', value: 'dark'},
+          {title: 'Light', value: 'light'},
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+    }),
+    defineField({
+      name: 'accentColor',
+      title: 'Accent Color',
+      type: 'string',
+      group: 'appearance',
+      initialValue: 'white',
+      description: 'สีที่ใช้กับ hover underline และ interactive elements',
+      options: {
+        list: [
+          {title: 'White / Black (default)', value: 'white'},
+          {title: 'Gold', value: 'gold'},
+          {title: 'Cyan', value: 'cyan'},
+          {title: 'Rose', value: 'rose'},
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+    }),
+    defineField({
+      name: 'videoGridLayout',
+      title: 'Video Grid Layout',
+      type: 'string',
+      group: 'appearance',
+      initialValue: 'grid',
+      options: {
+        list: [
+          {title: 'Auto Grid (responsive)', value: 'grid'},
+          {title: '2 Columns', value: 'large'},
+          {title: 'Single Column', value: 'single'},
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
     }),
   ],
   preview: {
