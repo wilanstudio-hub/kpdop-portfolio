@@ -247,7 +247,7 @@
 </header>
 
 <section class="hero" id="top" style="padding:0; border:none;">
-  <iframe id="heroIframe" src="" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  <iframe id="heroIframe" src="" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
   <div class="hero-content">
     <div class="hero-eyebrow" id="heroEyebrow"></div>
     <h1 id="heroName"></h1>
@@ -462,10 +462,11 @@
     if (source.type === 'youtube') {
       const iframe = document.createElement('iframe');
       const base = youtubeEmbed(source.id, autoplay);
-      iframe.src = base;
       iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', '');
       card.appendChild(iframe);
+      requestAnimationFrame(() => { iframe.src = base; });
       if (!autoplay) {
         card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(source.id, true); });
         card.addEventListener('mouseleave', () => { iframe.src = base; });
@@ -473,11 +474,11 @@
     } else if (source.type === 'facebook') {
       const iframe = document.createElement('iframe');
       const base = facebookEmbed(source.url, autoplay);
-      iframe.src = base;
       iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allowfullscreen', 'true');
-      iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share');
       card.appendChild(iframe);
+      requestAnimationFrame(() => { iframe.src = base; });
       if (!autoplay) {
         card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(source.url, true); });
         card.addEventListener('mouseleave', () => { iframe.src = base; });
@@ -498,7 +499,7 @@
       video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
       card.appendChild(video);
       if (autoplay) {
-        video.play().catch(() => {});
+        requestAnimationFrame(() => video.play().catch(() => {}));
       } else {
         card.addEventListener('mouseenter', () => video.play());
         card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
@@ -506,10 +507,11 @@
     } else if (source.type === 'vimeo') {
       const iframe = document.createElement('iframe');
       const base = vimeoEmbed(source.id, autoplay);
-      iframe.src = base;
       iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', '');
       card.appendChild(iframe);
+      requestAnimationFrame(() => { iframe.src = base; });
       if (!autoplay) {
         card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(source.id, true); });
         card.addEventListener('mouseleave', () => { iframe.src = base; });
@@ -574,7 +576,9 @@
     if (data.homePage) applySectionOrder(data.homePage.sections);
 
     document.getElementById('navLogo').textContent = site.logo || 'K P D O P';
-    document.getElementById('heroIframe').src = vimeoEmbed(site.heroVideoId, true);
+    requestAnimationFrame(() => {
+      document.getElementById('heroIframe').src = vimeoEmbed(site.heroVideoId, true);
+    });
     document.getElementById('heroEyebrow').textContent = site.heroEyebrow || '';
     document.getElementById('heroName').innerHTML =
       (site.heroFirstName || '') + '<br>' + (site.heroLastName || '');
