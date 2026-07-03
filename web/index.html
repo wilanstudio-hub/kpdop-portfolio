@@ -457,46 +457,63 @@
   }
 
   // Attaches the correct media player element to `card` and wires hover autoplay.
-  function attachVideoMedia(card, source) {
+  function attachVideoMedia(card, source, autoplay = false) {
     if (!source) return;
     if (source.type === 'youtube') {
       const iframe = document.createElement('iframe');
-      const base = youtubeEmbed(source.id, false);
+      const base = youtubeEmbed(source.id, autoplay);
       iframe.src = base;
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allow', 'autoplay; fullscreen');
       card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(source.id, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = base; });
+      if (!autoplay) {
+        card.addEventListener('mouseenter', () => { iframe.src = youtubeEmbed(source.id, true); });
+        card.addEventListener('mouseleave', () => { iframe.src = base; });
+      }
     } else if (source.type === 'facebook') {
       const iframe = document.createElement('iframe');
-      const base = facebookEmbed(source.url, false);
+      const base = facebookEmbed(source.url, autoplay);
       iframe.src = base;
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allowfullscreen', 'true');
       iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share');
       card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(source.url, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = base; });
+      if (!autoplay) {
+        card.addEventListener('mouseenter', () => { iframe.src = facebookEmbed(source.url, true); });
+        card.addEventListener('mouseleave', () => { iframe.src = base; });
+      }
     } else if (source.type === 'file') {
       const video = document.createElement('video');
       video.src = source.url;
+      video.setAttribute('muted', '');
+      video.setAttribute('loop', '');
+      video.setAttribute('playsinline', '');
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
+      if (autoplay) {
+        video.setAttribute('autoplay', '');
+        video.autoplay = true;
+      }
       video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
       card.appendChild(video);
-      card.addEventListener('mouseenter', () => video.play());
-      card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+      if (autoplay) {
+        video.play().catch(() => {});
+      } else {
+        card.addEventListener('mouseenter', () => video.play());
+        card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+      }
     } else if (source.type === 'vimeo') {
       const iframe = document.createElement('iframe');
-      const base = vimeoEmbed(source.id, false);
+      const base = vimeoEmbed(source.id, autoplay);
       iframe.src = base;
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('allow', 'autoplay; fullscreen');
       card.appendChild(iframe);
-      card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(source.id, true); });
-      card.addEventListener('mouseleave', () => { iframe.src = base; });
+      if (!autoplay) {
+        card.addEventListener('mouseenter', () => { iframe.src = vimeoEmbed(source.id, true); });
+        card.addEventListener('mouseleave', () => { iframe.src = base; });
+      }
     }
     // Transparent overlay captures the click without letting the iframe steal it
     const overlay = document.createElement('div');
@@ -530,7 +547,7 @@
     const card = document.createElement('div');
     card.className = 'highlight-card';
 
-    attachVideoMedia(card, resolveVideoSource(item));
+    attachVideoMedia(card, resolveVideoSource(item), true);
 
     const label = document.createElement('div');
     label.className = 'highlight-label';
